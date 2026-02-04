@@ -1,36 +1,32 @@
-const API_URL = 'http://localhost:3000/api';
+const API_URL = 'https://autorentpro.onrender.com/api';
 let currentUser = null;
 
-// --- 0. KHỞI TẠO (GUEST MODE) ---
 document.addEventListener('DOMContentLoaded', () => {
-    // Tải danh sách xe ngay lập tức
     loadCars();
-
-    // Kiểm tra nếu có token/user lưu trong localStorage (nếu có tính năng này sau này)
-    // Hiện tại chưa có, nên mặc định là Guest
     updateUIForGuest();
 });
 
-// --- 1. QUẢN LÝ UI STATE ---
 function updateUIForGuest() {
     currentUser = null;
-    document.getElementById('auth-section').classList.add('hidden');
-    document.getElementById('main-app').classList.remove('hidden');
+    const authSection = document.getElementById('auth-section');
+    const mainApp = document.getElementById('main-app');
+    
+    if(authSection) authSection.classList.add('hidden');
+    if(mainApp) mainApp.classList.remove('hidden');
 
-    // Navbar
-    document.getElementById('user-display').innerText = 'Khách';
+    const userDisplay = document.getElementById('user-display');
+    if(userDisplay) userDisplay.innerText = 'Khách';
+    
     document.getElementById('btn-login-nav').classList.remove('hidden');
     document.getElementById('btn-logout').classList.add('hidden');
 
-    // Tabs
-    document.getElementById('nav-item-cars').classList.remove('hidden'); // Khách được xem xe
+    document.getElementById('nav-item-cars').classList.remove('hidden');
     document.getElementById('nav-item-history').classList.add('hidden');
     document.getElementById('nav-item-admin').classList.add('hidden');
 
-    // Hero Banner
-    document.querySelector('.hero-section').classList.remove('hidden');
+    const heroSection = document.querySelector('.hero-section');
+    if(heroSection) heroSection.classList.remove('hidden');
 
-    // Reset view về xe
     switchTab('cars');
 }
 
@@ -39,30 +35,26 @@ function updateUIForUser(user) {
     document.getElementById('auth-section').classList.add('hidden');
     document.getElementById('main-app').classList.remove('hidden');
 
-    // Navbar
     document.getElementById('user-display').innerText = `👤 ${user.fullName}`;
     document.getElementById('btn-login-nav').classList.add('hidden');
     document.getElementById('btn-logout').classList.remove('hidden');
 
-    // Tabs & View Logic
     if (user.role === 'ADMIN') {
-        // 🔥 ADMIN VIEW: Chỉ hiện duyệt đơn, ẩn hết cái khác
         document.getElementById('nav-item-cars').classList.add('hidden');
         document.getElementById('nav-item-history').classList.add('hidden');
         document.getElementById('nav-item-admin').classList.remove('hidden');
 
-        // Ẩn Hero Banner cho đỡ cấn
-        document.querySelector('.hero-section').classList.add('hidden');
+        const heroSection = document.querySelector('.hero-section');
+        if(heroSection) heroSection.classList.add('hidden');
 
         loadAdminDashboard();
     } else {
-        // 🍃 CUSTOMER VIEW:
         document.getElementById('nav-item-cars').classList.remove('hidden');
         document.getElementById('nav-item-history').classList.remove('hidden');
         document.getElementById('nav-item-admin').classList.add('hidden');
 
-        // Hiện Hero Banner
-        document.querySelector('.hero-section').classList.remove('hidden');
+        const heroSection = document.querySelector('.hero-section');
+        if(heroSection) heroSection.classList.remove('hidden');
 
         loadCars();
     }
@@ -78,7 +70,6 @@ function showMainCars() {
     document.getElementById('main-app').classList.remove('hidden');
 }
 
-// --- 2. ĐĂNG KÝ / ĐĂNG NHẬP ---
 async function registerUser() {
     const username = document.getElementById('username').value;
     const email = document.getElementById('email').value;
@@ -103,11 +94,13 @@ async function registerUser() {
     } catch (err) { console.error(err); alert("Lỗi kết nối server"); }
 }
 
-document.getElementById('btn-logout').addEventListener('click', function () {
-    updateUIForGuest();
-});
+const btnLogout = document.getElementById('btn-logout');
+if(btnLogout) {
+    btnLogout.addEventListener('click', function () {
+        updateUIForGuest();
+    });
+}
 
-// --- 3. TẢI DANH SÁCH XE ---
 async function loadCars() {
     const model = document.getElementById('searchModel').value;
     const maxPrice = document.getElementById('maxPrice').value;
@@ -123,7 +116,7 @@ async function loadCars() {
         const container = document.getElementById('car-list');
         container.innerHTML = '';
 
-        if (cars.length === 0) {
+        if (!cars || cars.length === 0) {
             container.innerHTML = `<div class="text-center py-5 text-muted col-12"><i class="fas fa-car-crash fs-1 mb-3"></i><p>Không tìm thấy xe nào hợp lý cả!</p></div>`;
             return;
         }
@@ -133,8 +126,8 @@ async function loadCars() {
             const statusText = car.status === 'AVAILABLE' ? 'Sẵn sàng' : 'Đã thuê';
 
             let carIcon = 'fa-car';
-            if (car.brand.toLowerCase().includes('vinfast')) carIcon = 'fa-bolt';
-            if (car.brand.toLowerCase().includes('mercedes')) carIcon = 'fa-star';
+            if (car.brand && car.brand.toLowerCase().includes('vinfast')) carIcon = 'fa-bolt';
+            if (car.brand && car.brand.toLowerCase().includes('mercedes')) carIcon = 'fa-star';
 
             let carImageDisplay = `<div class="car-img-wrapper"><i class="fas ${carIcon} car-img-placeholder"></i><span class="badge bg-${statusColor} badge-status">${statusText}</span></div>`;
 
@@ -146,7 +139,6 @@ async function loadCars() {
                     </div>
                 `;
             } else {
-                // Fallback cũ
                 carImageDisplay = `
                     <div class="car-img-wrapper">
                          <span class="badge bg-${statusColor} badge-status">${statusText}</span>
@@ -155,7 +147,6 @@ async function loadCars() {
                 `;
             }
 
-            // Stagger animation delay
             const delay = index * 0.1;
 
             const html = `
@@ -182,7 +173,7 @@ async function loadCars() {
                             <div class="d-flex align-items-center justify-content-between mt-3 pt-3 border-top">
                                 <div class="text-start">
                                     <small class="text-muted d-block" style="font-size: 0.8rem;">Giá thuê / ngày</small>
-                                    <div class="car-price">${car.pricePerDay.toLocaleString()} ₫</div>
+                                    <div class="car-price">${car.pricePerDay ? car.pricePerDay.toLocaleString() : 0} ₫</div>
                                 </div>
                                 <button onclick="openBookingModal('${car._id}', '${car.model}')" 
                                     class="btn btn-gradient shadow-sm" ${car.status !== 'AVAILABLE' ? 'disabled' : ''}>
@@ -196,10 +187,9 @@ async function loadCars() {
             container.innerHTML += html;
         });
 
-    } catch (err) { console.error(err); }
+    } catch (err) { console.error("Load cars error:", err); }
 }
 
-// --- 4. XỬ LÝ BOOKING (CÓ TIME) ---
 let selectedCarId = null;
 
 function openBookingModal(carId, carName) {
@@ -214,7 +204,6 @@ function openBookingModal(carId, carName) {
     document.getElementById('modal-car-name').innerText = carName;
     document.getElementById('modal-car-id').value = carId;
 
-    // Reset inputs
     document.getElementById('startDate').value = '';
     document.getElementById('endDate').value = '';
 
@@ -239,17 +228,17 @@ async function submitBooking() {
             body: JSON.stringify({
                 customerId: currentUser._id,
                 carId: selectedCarId,
-                startDate, // Gửi nguyên chuỗi ISO datetime
+                startDate,
                 endDate
             })
         });
 
         if (res.ok) {
             alert("✅ Đặt xe thành công! Check lịch sử nha.");
-            bootstrap.Modal.getInstance(document.getElementById('bookingModal')).hide();
+            const modalEl = document.getElementById('bookingModal');
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            if (modal) modal.hide();
 
-            // Chuyển sang tab lịch sử để user check ngay
-            // Cần check quyền logic chút: chỉ User mới có tab history
             if (currentUser.role !== 'ADMIN') {
                 loadHistory();
             }
@@ -257,10 +246,9 @@ async function submitBooking() {
             const err = await res.json();
             alert("Lỗi: " + err.message);
         }
-    } catch (err) { alert("Lỗi hệ thống"); }
+    } catch (err) { alert("Lỗi hệ thống khi đặt xe"); }
 }
 
-// --- 5. LỊCH SỬ THUÊ (CÓ GIỜ) ---
 async function loadHistory() {
     switchTab('history');
     if (!currentUser) return;
@@ -272,7 +260,7 @@ async function loadHistory() {
         const tbody = document.getElementById('history-list');
         tbody.innerHTML = '';
 
-        if (bookings.length === 0) {
+        if (!bookings || bookings.length === 0) {
             tbody.innerHTML = '<tr><td colspan="5" class="text-center">Bạn chưa có đơn hàng nào!</td></tr>';
             return;
         }
@@ -283,14 +271,10 @@ async function loadHistory() {
             const start = new Date(booking.startDate);
             const end = new Date(booking.endDate);
 
-            // Format: HH:mm DD/MM/YYYY
             const formatTime = (date) => {
                 return date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' ' + date.toLocaleDateString('vi-VN');
             };
 
-            // Tính tiền theo giờ (giả lập đơn giản: làm tròn ngày hoặc tính giờ lẻ)
-            // Logic cũ: tính theo ngày. Logic mới: vẫn giữ tính theo ngày cho đơn giản hoặc nâng cấp sau.
-            // Tạm thời giữ nguyên logic tính tiền (theo ngày) nhưng hiển thị giờ
             const diffTime = Math.abs(end - start);
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
             const pricePerDay = booking.car ? booking.car.pricePerDay : 0;
@@ -317,7 +301,6 @@ async function loadHistory() {
     } catch (err) { console.error(err); }
 }
 
-// --- 6. ADMIN DASHBOARD (CÓ GIỜ) ---
 async function loadAdminDashboard() {
     switchTab('admin');
 
@@ -328,7 +311,7 @@ async function loadAdminDashboard() {
         const tbody = document.getElementById('admin-list');
         tbody.innerHTML = '';
 
-        if (bookings.length === 0) {
+        if (!bookings || bookings.length === 0) {
             tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4">Chưa có đơn hàng nào cần xử lý.</td></tr>';
             return;
         }
@@ -341,7 +324,6 @@ async function loadAdminDashboard() {
             const end = new Date(booking.endDate);
             const formatTime = (date) => date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' ' + date.toLocaleDateString('vi-VN');
 
-            // Status styling
             let statusBadge = `<span class="badge bg-secondary">${booking.status}</span>`;
             if (booking.status === 'Pending') statusBadge = `<span class="badge bg-warning text-dark">⏳ Pending</span>`;
             if (booking.status === 'Confirmed') statusBadge = `<span class="badge bg-success">✅ Confirmed</span>`;
@@ -397,7 +379,6 @@ async function updateBookingStatus(bookingId, newStatus) {
     } catch (err) { console.error(err); }
 }
 
-// --- 7. UTILS ---
 function switchTab(tabName) {
     const btnCars = document.getElementById('btn-cars');
     const btnHistory = document.getElementById('btn-history');
@@ -407,23 +388,22 @@ function switchTab(tabName) {
     const divHistory = document.getElementById('tab-history');
     const divAdmin = document.getElementById('tab-admin');
 
-    // Reset view
-    divCars.classList.add('hidden');
-    divHistory.classList.add('hidden');
-    divAdmin.classList.add('hidden');
+    if(divCars) divCars.classList.add('hidden');
+    if(divHistory) divHistory.classList.add('hidden');
+    if(divAdmin) divAdmin.classList.add('hidden');
 
     if (btnCars) btnCars.classList.remove('active');
     if (btnHistory) btnHistory.classList.remove('active');
     if (btnAdmin) btnAdmin.classList.remove('active');
 
     if (tabName === 'cars') {
-        divCars.classList.remove('hidden');
+        if(divCars) divCars.classList.remove('hidden');
         if (btnCars) btnCars.classList.add('active');
     } else if (tabName === 'history') {
-        divHistory.classList.remove('hidden');
+        if(divHistory) divHistory.classList.remove('hidden');
         if (btnHistory) btnHistory.classList.add('active');
     } else if (tabName === 'admin') {
-        divAdmin.classList.remove('hidden');
+        if(divAdmin) divAdmin.classList.remove('hidden');
         if (btnAdmin) btnAdmin.classList.add('active');
     }
 }
